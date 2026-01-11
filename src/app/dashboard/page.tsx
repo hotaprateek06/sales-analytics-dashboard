@@ -1,20 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import SalesChart from "@/components/organisms/SalesChart";
 import SalesFilter from "@/components/organisms/SalesFilter";
 import Button from "@/components/atoms/Button";
-
-import { salesData } from "@/data/salesData";
-import { filterSalesByYear } from "@/utils/filterSalesByYear";
+import { SalesRecord } from "@/types/sales";
 import { ChartType } from "@/types/chart";
 
 export default function DashboardPage() {
   const [year, setYear] = useState<2022 | 2023 | 2024>(2024);
   const [chartType, setChartType] = useState<ChartType>("bar");
+  const [data, setData] = useState<SalesRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const yearlyData = filterSalesByYear(salesData, year);
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/sales?year=${year}`)
+      .then((res) => res.json())
+      .then((result) => {
+        setData(result);
+        setLoading(false);
+      });
+  }, [year]);
 
   return (
     <DashboardLayout title={`Sales Dashboard – ${year}`}>
@@ -27,7 +35,11 @@ export default function DashboardPage() {
           <Button label="Pie" onClick={() => setChartType("pie")} />
         </div>
 
-        <SalesChart data={yearlyData} chartType={chartType} />
+        {loading ? (
+          <p className="text-slate-400">Loading sales data...</p>
+        ) : (
+          <SalesChart data={data} chartType={chartType} />
+        )}
       </div>
     </DashboardLayout>
   );
